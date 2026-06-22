@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { LangProvider, useLang } from './LangContext'
 import BottomNav from './components/BottomNav'
+import OnboardingPage from './pages/OnboardingPage'
 import HomePage from './pages/HomePage'
 import LevelsPage from './pages/LevelsPage'
 import LessonsPage from './pages/LessonsPage'
@@ -7,9 +9,15 @@ import LessonPage from './pages/LessonPage'
 import VocabPage from './pages/VocabPage'
 import TestPage from './pages/TestPage'
 import ProgressPage from './pages/ProgressPage'
+import SettingsPage from './pages/SettingsPage'
 
 function Layout() {
+  const { lang } = useLang()
   const location = useLocation()
+
+  // Show onboarding if no language selected
+  if (!lang) return <OnboardingPage />
+
   const hideNav = ['/lesson/', '/vocab/', '/test/'].some(p => location.pathname.includes(p))
 
   return (
@@ -22,6 +30,7 @@ function Layout() {
         <Route path="/vocab/:level/:id" element={<VocabPage />} />
         <Route path="/test/:level/:id" element={<TestPage />} />
         <Route path="/progress" element={<ProgressPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Routes>
       {!hideNav && <BottomNav />}
     </>
@@ -30,8 +39,10 @@ function Layout() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Layout />
-    </BrowserRouter>
+    <LangProvider>
+      <BrowserRouter>
+        <Layout />
+      </BrowserRouter>
+    </LangProvider>
   )
 }

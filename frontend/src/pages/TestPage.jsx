@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
+import { useLang } from '../LangContext'
 
 export default function TestPage() {
   const { level, id } = useParams()
   const navigate = useNavigate()
+  const { t, lang } = useLang()
   const [questions, setQuestions] = useState([])
   const [qIdx, setQIdx] = useState(0)
   const [selected, setSelected] = useState(null)
@@ -18,35 +20,35 @@ export default function TestPage() {
     return () => window.Telegram?.WebApp?.BackButton?.hide()
   }, [level, id])
 
-  if (!questions.length) return <div className="loading">Загрузка...</div>
+  if (!questions.length) return (
+    <div className="loading"><div className="spinner" /></div>
+  )
 
   if (finished) {
     const pct = Math.round((score / questions.length) * 100)
     const emoji = pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '📚'
+    const msg = pct >= 80 ? t.excellent : pct >= 50 ? t.good : t.needMore
 
     return (
-      <div className="page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', textAlign: 'center' }}>
-        <div style={{ fontSize: 64, marginBottom: 16 }}>{emoji}</div>
-        <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>
-          {score} / {questions.length}
-        </h2>
-        <div style={{ fontSize: 36, fontWeight: 800, color: pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)', marginBottom: 8 }}>
+      <div className="page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '85vh', textAlign: 'center' }}>
+        <div style={{ fontSize: 72, marginBottom: 16 }}>{emoji}</div>
+        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4 }}>{t.result}</h2>
+        <div style={{ fontSize: 48, fontWeight: 900, marginBottom: 4,
+          color: pct >= 80 ? 'var(--success)' : pct >= 50 ? 'var(--warning)' : 'var(--danger)' }}>
           {pct}%
         </div>
-        <p style={{ color: 'var(--tg-hint)', marginBottom: 8 }}>
-          Заработано: <b style={{ color: '#92400E' }}>⭐ +{score * 2} XP</b>
-        </p>
-        <p style={{ color: 'var(--tg-hint)', marginBottom: 28 }}>
-          {pct >= 80 ? 'Отличный результат!' : pct >= 50 ? 'Неплохо, продолжай!' : 'Повтори слова и попробуй снова'}
-        </p>
+        <div style={{ fontSize: 16, color: 'var(--tg-hint)', marginBottom: 8 }}>
+          {score} / {questions.length}
+        </div>
+        <div className="xp-chip" style={{ marginBottom: 8 }}>⭐ +{score * 2} XP</div>
+        <p style={{ color: 'var(--tg-hint)', marginBottom: 28, fontSize: 14 }}>{msg}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 }}>
-          <button className="btn btn-primary"
-            onClick={() => navigate(`/learn/${level}`)}>
-            К урокам
+          <button className="btn btn-primary" onClick={() => navigate(`/learn/${level}`)}>
+            {t.backToLessons}
           </button>
           <button className="btn btn-secondary"
             onClick={() => { setQIdx(0); setSelected(null); setScore(0); setFinished(false) }}>
-            🔄 Пройти снова
+            🔄 {t.tryAgain}
           </button>
         </div>
       </div>
@@ -59,48 +61,46 @@ export default function TestPage() {
   const handleAnswer = async (optIdx) => {
     if (selected !== null) return
     setSelected(optIdx)
-
     const correct = optIdx === q.ans
-    if (correct) setScore(s => s + 1)
+    const newScore = score + (correct ? 1 : 0)
 
     setTimeout(async () => {
       if (qIdx + 1 >= questions.length) {
-        const newScore = score + (correct ? 1 : 0)
         await api.saveTestResult(level, parseInt(id), newScore, questions.length).catch(() => {})
         setScore(newScore)
         setFinished(true)
       } else {
+        if (correct) setScore(s => s + 1)
         setQIdx(i => i + 1)
         setSelected(null)
       }
-    }, 900)
+    }, 1000)
   }
 
   return (
     <div className="page">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <button className="back-btn" onClick={() => navigate(`/lesson/${level}/${id}`)}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <span style={{ color: 'var(--tg-hint)', fontWeight: 600 }}>
-          {qIdx + 1} / {questions.length}
-        </span>
-        <div style={{ fontWeight: 700, color: 'var(--success)' }}>✓ {score}</div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontWeight: 700, color: 'var(--tg-hint)', fontSize: 13 }}>
+            {t.question} {qIdx + 1} / {questions.length}
+          </div>
+        </div>
+        <div style={{ fontWeight: 800, color: 'var(--success)', fontSize: 16 }}>✓ {score}</div>
       </div>
 
-      <div className="progress-bar" style={{ marginBottom: 24 }}>
+      <div className="progress-bar" style={{ marginBottom: 28 }}>
         <div className="progress-bar-fill" style={{ width: `${progress}%` }} />
       </div>
 
       {/* Question */}
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.4 }}>
-          {q.q}
-        </div>
+      <div className="card" style={{ marginBottom: 20, padding: '20px 18px' }}>
+        <div style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.5 }}>{q.q}</div>
       </div>
 
       {/* Options */}
@@ -110,15 +110,43 @@ export default function TestPage() {
           if (i === q.ans) cls += ' correct'
           else if (i === selected && selected !== q.ans) cls += ' wrong'
         }
+
         return (
           <button key={i} className={cls} onClick={() => handleAnswer(i)}>
-            <span style={{ fontWeight: 600, marginRight: 8, color: 'var(--tg-hint)' }}>
-              {String.fromCharCode(65 + i)}.
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 24, height: 24,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,.1)',
+              fontSize: 12,
+              fontWeight: 800,
+              marginRight: 10,
+              flexShrink: 0,
+            }}>
+              {String.fromCharCode(65 + i)}
             </span>
             {opt}
           </button>
         )
       })}
+
+      {/* Feedback */}
+      {selected !== null && (
+        <div style={{
+          marginTop: 12,
+          padding: '12px 16px',
+          borderRadius: 'var(--radius)',
+          background: selected === q.ans ? 'var(--success-dim)' : 'var(--danger-dim)',
+          color: selected === q.ans ? 'var(--success)' : 'var(--danger)',
+          fontWeight: 700,
+          textAlign: 'center',
+          fontSize: 15,
+        }}>
+          {selected === q.ans ? `✓ ${t.correct}` : `✗ ${t.wrong}`}
+        </div>
+      )}
     </div>
   )
 }

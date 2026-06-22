@@ -1,0 +1,130 @@
+import { createContext, useContext, useState, useEffect } from 'react'
+
+const LangContext = createContext()
+
+export const LANGS = {
+  ru: {
+    code: 'ru',
+    flag: '🇷🇺',
+    name: 'Русский',
+    // UI strings
+    learn: 'Учиться',
+    progress: 'Прогресс',
+    home: 'Главная',
+    lessons: 'Уроки',
+    vocabulary: 'Словарь',
+    test: 'Тест',
+    level: 'Уровень',
+    lesson: 'Урок',
+    grammar: 'Грамматика',
+    dialogue: 'Диалог',
+    words: 'Слова',
+    exercises: 'Упражнения',
+    know: 'Знаю ✓',
+    dontKnow: 'Не знаю ✗',
+    showTranslation: 'Показать перевод',
+    nextLesson: 'Следующий урок',
+    startVocab: 'Учить слова',
+    startTest: 'Пройти тест',
+    backToLessons: '← К урокам',
+    result: 'Результат',
+    xpEarned: 'XP заработано',
+    tryAgain: 'Пройти снова',
+    excellent: 'Отличный результат!',
+    good: 'Неплохо, продолжай!',
+    needMore: 'Повтори слова и попробуй снова',
+    chooseLanguage: 'Выбери язык обучения',
+    languageHint: 'Правила и переводы будут на этом языке',
+    continue: 'Продолжить',
+    greeting: 'Привет',
+    dailyGoal: 'Цель на сегодня',
+    streak: 'дней подряд',
+    totalXP: 'Общий XP',
+    completedLessons: 'Уроков пройдено',
+    knownWords: 'Слов выучено',
+    chooseLevel: 'Выбери уровень',
+    allLevels: 'Все уровни',
+    of: 'из',
+    question: 'Вопрос',
+    correct: 'Правильно!',
+    wrong: 'Неправильно',
+    tapToFlip: 'Нажми чтобы перевернуть',
+    german: '🇩🇪 Немецкий',
+    settings: 'Настройки',
+    changeLanguage: 'Язык интерфейса',
+    aboutApp: 'О приложении',
+    version: 'Alman Bildung v1.0',
+  },
+  uz: {
+    code: 'uz',
+    flag: '🇺🇿',
+    name: "O'zbek",
+    learn: "O'rganish",
+    progress: 'Natijalar',
+    home: 'Bosh sahifa',
+    lessons: 'Darslar',
+    vocabulary: 'Lug\'at',
+    test: 'Test',
+    level: 'Daraja',
+    lesson: 'Dars',
+    grammar: 'Grammatika',
+    dialogue: 'Dialog',
+    words: 'So\'zlar',
+    exercises: 'Mashqlar',
+    know: "Bilaman ✓",
+    dontKnow: "Bilmayman ✗",
+    showTranslation: 'Tarjimani ko\'rsat',
+    nextLesson: 'Keyingi dars',
+    startVocab: "So'zlarni o'rgan",
+    startTest: 'Testni boshlash',
+    backToLessons: '← Darslarga qaytish',
+    result: 'Natija',
+    xpEarned: 'XP olindi',
+    tryAgain: 'Qayta urinish',
+    excellent: 'Ajoyib natija!',
+    good: "Yaxshi, davom eting!",
+    needMore: "So'zlarni takrorlang va qayta urinib ko'ring",
+    chooseLanguage: "O'qitish tilini tanlang",
+    languageHint: "Qoidalar va tarjimalar shu tilda bo'ladi",
+    continue: 'Davom etish',
+    greeting: 'Salom',
+    dailyGoal: 'Bugungi maqsad',
+    streak: 'kun ketma-ket',
+    totalXP: 'Jami XP',
+    completedLessons: "O'tilgan darslar",
+    knownWords: "O'rganilgan so'zlar",
+    chooseLevel: 'Darajani tanlang',
+    allLevels: 'Barcha darajalar',
+    of: 'dan',
+    question: 'Savol',
+    correct: "To'g'ri!",
+    wrong: 'Noto\'g\'ri',
+    tapToFlip: 'Ag\'darish uchun bosing',
+    german: '🇩🇪 Nemis tili',
+    settings: 'Sozlamalar',
+    changeLanguage: 'Interfeys tili',
+    aboutApp: 'Ilova haqida',
+    version: 'Alman Bildung v1.0',
+  }
+}
+
+export function LangProvider({ children }) {
+  const [lang, setLang] = useState(() => {
+    return localStorage.getItem('alman_lang') || null
+  })
+
+  const changeLang = (code) => {
+    localStorage.setItem('alman_lang', code)
+    setLang(code)
+  }
+
+  const t = lang ? LANGS[lang] : LANGS.ru
+
+  return (
+    <LangContext.Provider value={{ lang, setLang: changeLang, t, LANGS }}>
+      {children}
+    </LangContext.Provider>
+  )
+}
+
+export const useLang = () => useContext(LangContext)
