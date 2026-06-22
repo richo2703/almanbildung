@@ -160,7 +160,9 @@ export default function LessonPage() {
           { emoji: '🃏', label: lang === 'uz' ? 'Juftlarni top' : 'Найди пары',  hint: lang === 'uz' ? '4 juft' : '4 пары', path: 'match',   color: '16,185,129' },
           { emoji: '⚡', label: lang === 'uz' ? 'Tezkor raund' : 'Speed Round',   hint: '30 ' + (lang === 'uz' ? 'soniya' : 'секунд'),       path: 'speed',   color: '245,158,11' },
           { emoji: '🎧', label: lang === 'uz' ? 'Eshit va tanla' : 'Послушай',    hint: lang === 'uz' ? 'audio test' : 'аудио тест',         path: 'listen',  color: '168,85,247' },
-          { emoji: '🔤', label: lang === 'uz' ? 'So\'z yig\'  ' : 'Собери слово', hint: lang === 'uz' ? 'harflarni ter' : 'из букв',         path: 'scramble',color: '239,68,68'  },
+          { emoji: '🔤', label: lang === 'uz' ? "So'z yig'" : 'Собери слово',   hint: lang === 'uz' ? 'harflarni ter' : 'из букв',              path: 'scramble', color: '239,68,68'  },
+          { emoji: '✍️', label: lang === 'uz' ? "Bo'sh joy"  : 'Вставь слово',  hint: lang === 'uz' ? "bo'sh joyni to'ldir" : 'fill in the blank', path: 'fill',     color: '20,184,166' },
+          { emoji: '🔀', label: lang === 'uz' ? "Tartibla"   : 'Порядок слов',  hint: lang === 'uz' ? "so'zlarni joylashtir" : 'расставь слова',    path: 'order',    color: '251,146,60' },
         ].map(({ emoji, label, hint, path, color }) => (
           <button
             key={path}
