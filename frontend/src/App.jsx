@@ -10,10 +10,13 @@ import VocabPage from './pages/VocabPage'
 import TestPage from './pages/TestPage'
 import ArticlePage from './pages/ArticlePage'
 import MatchPage from './pages/MatchPage'
+import SpeedPage from './pages/SpeedPage'
+import ListenPage from './pages/ListenPage'
+import ScramblePage from './pages/ScramblePage'
 import ProgressPage from './pages/ProgressPage'
 import SettingsPage from './pages/SettingsPage'
 
-const HIDE_NAV_PATHS = ['/lesson/', '/vocab/', '/test/', '/article/', '/match/']
+const HIDE_NAV_PATHS = ['/lesson/', '/vocab/', '/test/', '/article/', '/match/', '/speed/', '/listen/', '/scramble/']
 
 function Layout() {
   const { lang } = useLang()
@@ -34,6 +37,9 @@ function Layout() {
         <Route path="/test/:level/:id" element={<TestPage />} />
         <Route path="/article/:level/:id" element={<ArticlePage />} />
         <Route path="/match/:level/:id" element={<MatchPage />} />
+        <Route path="/speed/:level/:id" element={<SpeedPage />} />
+        <Route path="/listen/:level/:id" element={<ListenPage />} />
+        <Route path="/scramble/:level/:id" element={<ScramblePage />} />
         <Route path="/progress" element={<ProgressPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Routes>
