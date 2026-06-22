@@ -5,10 +5,11 @@ import hashlib
 import json
 from urllib.parse import parse_qs, unquote
 
-from fastapi import FastAPI, HTTPException, Header
+import httpx
+from fastapi import FastAPI, HTTPException, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 import database as db
@@ -99,6 +100,38 @@ class TestResultPayload(BaseModel):
 
 class LangPayload(BaseModel):
     lang: str
+
+
+# ── TTS proxy ────────────────────────────────────────────────────────────────
+
+@app.get("/api/tts")
+async def api_tts(q: str = Query(..., max_length=200)):
+    """Proxy Google Translate TTS — returns German mp3 audio."""
+    url = (
+        "https://translate.google.com/translate_tts"
+        f"?ie=UTF-8&q={httpx.URL(q)}&tl=de&client=tw-ob&ttsspeed=0.85"
+    )
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Referer": "https://translate.google.com/",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as client:
+            resp = await client.get(url, headers=headers)
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail="TTS upstream error")
+        return StreamingResponse(
+            iter([resp.content]),
+            media_type="audio/mpeg",
+            headers={
+                "Cache-Control": "public, max-age=86400",
+                "Content-Length": str(len(resp.content)),
+            }
+        )
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="TTS timeout")
+    except Exception:
+        raise HTTPException(status_code=502, detail="TTS unavailable")
 
 
 # ── Content endpoints ─────────────────────────────────────────────────────────
