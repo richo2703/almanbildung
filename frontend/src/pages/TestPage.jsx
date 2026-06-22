@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
 import { useLang } from '../LangContext'
+import { speakDE, isSpeechSupported } from '../speak'
 
 export default function TestPage() {
   const { level, id } = useParams()
@@ -100,7 +101,24 @@ export default function TestPage() {
 
       {/* Question */}
       <div className="card" style={{ marginBottom: 20, padding: '20px 18px' }}>
-        <div style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.5 }}>{q.q}</div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.5, flex: 1 }}>{q.q}</div>
+          {isSpeechSupported() && (
+            <button
+              onClick={() => speakDE(q.q)}
+              style={{
+                background: 'rgba(255,255,255,.07)',
+                border: '1px solid rgba(255,255,255,.12)',
+                borderRadius: 10,
+                padding: '6px 10px',
+                cursor: 'pointer',
+                fontSize: 16,
+                color: 'var(--tg-hint)',
+                flexShrink: 0,
+              }}
+            >🔊</button>
+          )}
+        </div>
       </div>
 
       {/* Options */}

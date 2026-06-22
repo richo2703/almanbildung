@@ -2,6 +2,33 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
 import { useLang } from '../LangContext'
+import { speakDE, isSpeechSupported } from '../speak'
+
+function SpeakBtn({ text, size = 'sm' }) {
+  const [active, setActive] = useState(false)
+  if (!isSpeechSupported()) return null
+  const handleSpeak = (e) => {
+    e.stopPropagation()
+    setActive(true)
+    speakDE(text)
+    setTimeout(() => setActive(false), 1200)
+  }
+  return (
+    <button onClick={handleSpeak} style={{
+      background: active ? 'rgba(99,102,241,.2)' : 'transparent',
+      border: 'none',
+      borderRadius: 8,
+      padding: size === 'sm' ? '2px 6px' : '5px 10px',
+      cursor: 'pointer',
+      fontSize: size === 'sm' ? 14 : 18,
+      color: active ? 'var(--accent)' : 'var(--tg-hint)',
+      transition: 'all .2s',
+      flexShrink: 0,
+    }}>
+      {active ? '🔈' : '🔊'}
+    </button>
+  )
+}
 
 export default function LessonPage() {
   const { level, id } = useParams()
@@ -46,9 +73,12 @@ export default function LessonPage() {
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 12, color: 'var(--tg-hint)', marginBottom: 2 }}>{level}</div>
-          <h1 style={{ fontSize: 17, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {lesson.title_de}
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <h1 style={{ fontSize: 17, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {lesson.title_de}
+            </h1>
+            <SpeakBtn text={lesson.title_de} size="sm" />
+          </div>
           <div style={{ fontSize: 13, color: 'var(--tg-hint)' }}>{titleText}</div>
         </div>
       </div>
@@ -71,9 +101,16 @@ export default function LessonPage() {
       {/* Vocab preview */}
       <div className="section-title">📝 {t.words} ({lesson.vocab?.length})</div>
       <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           {lesson.vocab?.slice(0, 12).map((w, i) => (
-            <span key={i} className="word-chip">{w.de}</span>
+            <span
+              key={i}
+              className="word-chip"
+              onClick={() => speakDE(w.de)}
+              style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+            >
+              {w.de} <span style={{ fontSize: 11, opacity: .6 }}>🔊</span>
+            </span>
           ))}
           {lesson.vocab?.length > 12 && (
             <span className="word-chip" style={{ color: 'var(--tg-hint)' }}>

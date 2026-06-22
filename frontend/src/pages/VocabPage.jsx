@@ -2,6 +2,41 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
 import { useLang } from '../LangContext'
+import { speakDE, isSpeechSupported } from '../speak'
+
+function SpeakBtn({ text, style = {} }) {
+  const [active, setActive] = useState(false)
+  if (!isSpeechSupported()) return null
+
+  const handleSpeak = (e) => {
+    e.stopPropagation()
+    setActive(true)
+    speakDE(text)
+    setTimeout(() => setActive(false), 1200)
+  }
+
+  return (
+    <button
+      onClick={handleSpeak}
+      style={{
+        background: active ? 'rgba(99,102,241,.25)' : 'rgba(255,255,255,.08)',
+        border: `1px solid ${active ? 'rgba(99,102,241,.5)' : 'rgba(255,255,255,.12)'}`,
+        borderRadius: 10,
+        padding: '6px 14px',
+        cursor: 'pointer',
+        fontSize: 18,
+        transition: 'all .2s',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 5,
+        color: active ? 'var(--accent)' : 'var(--tg-hint)',
+        ...style,
+      }}
+    >
+      {active ? '🔈' : '🔊'}
+    </button>
+  )
+}
 
 export default function VocabPage() {
   const { level, id } = useParams()
@@ -19,6 +54,14 @@ export default function VocabPage() {
     window.Telegram?.WebApp?.BackButton?.onClick(() => navigate(`/lesson/${level}/${id}`))
     return () => window.Telegram?.WebApp?.BackButton?.hide()
   }, [level, id])
+
+  // Auto-pronounce when card changes
+  useEffect(() => {
+    if (words.length && !done) {
+      const word = words[idx]
+      if (word) setTimeout(() => speakDE(word.de), 350)
+    }
+  }, [idx, words, done])
 
   if (!words.length) return (
     <div className="loading"><div className="spinner" /></div>
@@ -101,7 +144,11 @@ export default function VocabPage() {
               🇩🇪 Deutsch
             </div>
             <div className="flashcard-word">{word.de}</div>
-            <div style={{ fontSize: 13, color: 'var(--tg-hint)', marginTop: 8 }}>
+            {/* Speak button — stopPropagation prevents card flip */}
+            <div onClick={e => e.stopPropagation()} style={{ marginTop: 10 }}>
+              <SpeakBtn text={word.de} />
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--tg-hint)', marginTop: 10 }}>
               👆 {t.tapToFlip}
             </div>
           </>
@@ -117,8 +164,10 @@ export default function VocabPage() {
             {lang === 'ru' && word.uz && (
               <div className="flashcard-translation">{word.uz}</div>
             )}
-            <div style={{ marginTop: 12, fontSize: 14, color: 'var(--accent)', fontWeight: 600 }}>
-              🇩🇪 {word.de}
+            {/* German word + speak button on back side */}
+            <div onClick={e => e.stopPropagation()} style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <span style={{ fontSize: 14, color: 'var(--accent)', fontWeight: 600 }}>🇩🇪 {word.de}</span>
+              <SpeakBtn text={word.de} />
             </div>
           </>
         )}
