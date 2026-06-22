@@ -8,17 +8,20 @@ import LessonsPage from './pages/LessonsPage'
 import LessonPage from './pages/LessonPage'
 import VocabPage from './pages/VocabPage'
 import TestPage from './pages/TestPage'
+import ArticlePage from './pages/ArticlePage'
+import MatchPage from './pages/MatchPage'
 import ProgressPage from './pages/ProgressPage'
 import SettingsPage from './pages/SettingsPage'
+
+const HIDE_NAV_PATHS = ['/lesson/', '/vocab/', '/test/', '/article/', '/match/']
 
 function Layout() {
   const { lang } = useLang()
   const location = useLocation()
 
-  // Show onboarding if no language selected
   if (!lang) return <OnboardingPage />
 
-  const hideNav = ['/lesson/', '/vocab/', '/test/'].some(p => location.pathname.includes(p))
+  const hideNav = HIDE_NAV_PATHS.some(p => location.pathname.includes(p))
 
   return (
     <>
@@ -29,6 +32,8 @@ function Layout() {
         <Route path="/lesson/:level/:id" element={<LessonPage />} />
         <Route path="/vocab/:level/:id" element={<VocabPage />} />
         <Route path="/test/:level/:id" element={<TestPage />} />
+        <Route path="/article/:level/:id" element={<ArticlePage />} />
+        <Route path="/match/:level/:id" element={<MatchPage />} />
         <Route path="/progress" element={<ProgressPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Routes>

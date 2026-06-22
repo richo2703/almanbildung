@@ -139,7 +139,7 @@ export default function LessonPage() {
         </>
       )}
 
-      {/* Actions */}
+      {/* Main actions */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
         <button className="btn btn-primary" onClick={handleStartVocab}>
           🃏 {t.startVocab} ({lesson.vocab?.length})
@@ -147,6 +147,39 @@ export default function LessonPage() {
         <button className="btn btn-secondary"
           onClick={() => navigate(`/test/${level}/${id}`)}>
           ✅ {t.startTest} ({lesson.exercises?.length})
+        </button>
+      </div>
+
+      {/* Games section */}
+      <div className="section-title" style={{ marginTop: 20 }}>
+        🎮 {lang === 'uz' ? "O'yinlar" : 'Игры'}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <button
+          className="card"
+          onClick={() => navigate(`/article/${level}/${id}`)}
+          style={{ cursor: 'pointer', textAlign: 'center', padding: '16px 10px', border: '1px solid rgba(59,130,246,.25)', background: 'rgba(59,130,246,.06)' }}
+        >
+          <div style={{ fontSize: 28, marginBottom: 6 }}>🎯</div>
+          <div style={{ fontWeight: 700, fontSize: 13 }}>
+            {lang === 'uz' ? 'Artikl' : 'Артикль'}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--tg-hint)', marginTop: 3 }}>
+            der / die / das
+          </div>
+        </button>
+        <button
+          className="card"
+          onClick={() => navigate(`/match/${level}/${id}`)}
+          style={{ cursor: 'pointer', textAlign: 'center', padding: '16px 10px', border: '1px solid rgba(16,185,129,.25)', background: 'rgba(16,185,129,.06)' }}
+        >
+          <div style={{ fontSize: 28, marginBottom: 6 }}>🃏</div>
+          <div style={{ fontWeight: 700, fontSize: 13 }}>
+            {lang === 'uz' ? 'Juftlarni top' : 'Найди пары'}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--tg-hint)', marginTop: 3 }}>
+            {lang === 'uz' ? '4 ta juft' : '4 пары'}
+          </div>
         </button>
       </div>
     </div>
