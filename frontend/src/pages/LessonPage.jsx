@@ -98,6 +98,36 @@ export default function LessonPage() {
         </>
       )}
 
+      {/* Kultur-Tipp */}
+      {lesson.kultur_tipp && (
+        <>
+          <div className="section-title">🇩🇪 {lang === 'uz' ? 'Madaniy ma\'lumot' : 'Культурная заметка'}</div>
+          <div className="card" style={{ marginBottom: 16, borderLeft: '3px solid rgba(99,102,241,.5)', background: 'rgba(99,102,241,.06)' }}>
+            <div style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--tg-text)' }}>
+              {lesson.kultur_tipp}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Phrases */}
+      {lesson.phrases?.length > 0 && (
+        <>
+          <div className="section-title">💬 {lang === 'uz' ? 'Foydali iboralar' : 'Полезные фразы'}</div>
+          <div className="card" style={{ marginBottom: 16 }}>
+            {lesson.phrases.map((p, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingBottom: i < lesson.phrases.length - 1 ? 10 : 0, marginBottom: i < lesson.phrases.length - 1 ? 10 : 0, borderBottom: i < lesson.phrases.length - 1 ? '1px solid rgba(255,255,255,.06)' : 'none' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{p.de}</div>
+                  <div style={{ fontSize: 12, color: 'var(--tg-hint)' }}>{lang === 'uz' ? p.uz : p.ru}</div>
+                </div>
+                <button onClick={() => speakDE(p.de)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--tg-hint)', flexShrink: 0, padding: '0 4px' }}>🔊</button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       {/* Vocab preview */}
       <div className="section-title">📝 {t.words} ({lesson.vocab?.length})</div>
       <div className="card" style={{ marginBottom: 16 }}>
@@ -139,7 +169,7 @@ export default function LessonPage() {
         </>
       )}
 
-      {/* Actions */}
+      {/* Main actions */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
         <button className="btn btn-primary" onClick={handleStartVocab}>
           🃏 {t.startVocab} ({lesson.vocab?.length})
@@ -148,6 +178,37 @@ export default function LessonPage() {
           onClick={() => navigate(`/test/${level}/${id}`)}>
           ✅ {t.startTest} ({lesson.exercises?.length})
         </button>
+      </div>
+
+      {/* Games section */}
+      <div className="section-title" style={{ marginTop: 20 }}>
+        🎮 {lang === 'uz' ? "O'yinlar" : 'Игры'}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {[
+          { emoji: '🎯', label: lang === 'uz' ? 'Artikl' : 'Артикль',    hint: 'der / die / das',                          path: 'article', color: '59,130,246' },
+          { emoji: '🃏', label: lang === 'uz' ? 'Juftlarni top' : 'Найди пары',  hint: lang === 'uz' ? '4 juft' : '4 пары', path: 'match',   color: '16,185,129' },
+          { emoji: '⚡', label: lang === 'uz' ? 'Tezkor raund' : 'Speed Round',   hint: '30 ' + (lang === 'uz' ? 'soniya' : 'секунд'),       path: 'speed',   color: '245,158,11' },
+          { emoji: '🎧', label: lang === 'uz' ? 'Eshit va tanla' : 'Послушай',    hint: lang === 'uz' ? 'audio test' : 'аудио тест',         path: 'listen',  color: '168,85,247' },
+          { emoji: '🔤', label: lang === 'uz' ? "So'z yig'" : 'Собери слово',   hint: lang === 'uz' ? 'harflarni ter' : 'из букв',              path: 'scramble', color: '239,68,68'  },
+          { emoji: '✍️', label: lang === 'uz' ? "Bo'sh joy"  : 'Вставь слово',  hint: lang === 'uz' ? "bo'sh joyni to'ldir" : 'fill in the blank', path: 'fill',     color: '20,184,166' },
+          { emoji: '🔀', label: lang === 'uz' ? "Tartibla"   : 'Порядок слов',  hint: lang === 'uz' ? "so'zlarni joylashtir" : 'расставь слова',    path: 'order',    color: '251,146,60' },
+        ].map(({ emoji, label, hint, path, color }) => (
+          <button
+            key={path}
+            className="card"
+            onClick={() => navigate(`/${path}/${level}/${id}`)}
+            style={{
+              cursor: 'pointer', textAlign: 'center', padding: '16px 10px',
+              border: `1px solid rgba(${color},.25)`,
+              background: `rgba(${color},.06)`,
+            }}
+          >
+            <div style={{ fontSize: 26, marginBottom: 6 }}>{emoji}</div>
+            <div style={{ fontWeight: 700, fontSize: 13 }}>{label.trim()}</div>
+            <div style={{ fontSize: 11, color: 'var(--tg-hint)', marginTop: 3 }}>{hint}</div>
+          </button>
+        ))}
       </div>
     </div>
   )
