@@ -102,7 +102,7 @@ export default function TestPage() {
       {/* Question */}
       <div className="card" style={{ marginBottom: 20, padding: '20px 18px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-          <div style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.5, flex: 1 }}>{q.q}</div>
+          <div style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.5, flex: 1 }}>{(lang === 'uz' && q.q_uz) ? q.q_uz : q.q}</div>
           {isSpeechSupported() && (
             <button
               onClick={() => speakDE(q.q)}
@@ -122,7 +122,7 @@ export default function TestPage() {
       </div>
 
       {/* Options */}
-      {q.opts.map((opt, i) => {
+      {(lang === 'uz' && q.opts_uz ? q.opts_uz : q.opts).map((opt, i) => {
         let cls = 'quiz-option'
         if (selected !== null) {
           if (i === q.ans) cls += ' correct'
