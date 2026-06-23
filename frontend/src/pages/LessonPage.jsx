@@ -98,6 +98,36 @@ export default function LessonPage() {
         </>
       )}
 
+      {/* Kultur-Tipp */}
+      {lesson.kultur_tipp && (
+        <>
+          <div className="section-title">🇩🇪 {lang === 'uz' ? 'Madaniy ma\'lumot' : 'Культурная заметка'}</div>
+          <div className="card" style={{ marginBottom: 16, borderLeft: '3px solid rgba(99,102,241,.5)', background: 'rgba(99,102,241,.06)' }}>
+            <div style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--tg-text)' }}>
+              {lesson.kultur_tipp}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Phrases */}
+      {lesson.phrases?.length > 0 && (
+        <>
+          <div className="section-title">💬 {lang === 'uz' ? 'Foydali iboralar' : 'Полезные фразы'}</div>
+          <div className="card" style={{ marginBottom: 16 }}>
+            {lesson.phrases.map((p, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', paddingBottom: i < lesson.phrases.length - 1 ? 10 : 0, marginBottom: i < lesson.phrases.length - 1 ? 10 : 0, borderBottom: i < lesson.phrases.length - 1 ? '1px solid rgba(255,255,255,.06)' : 'none' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{p.de}</div>
+                  <div style={{ fontSize: 12, color: 'var(--tg-hint)' }}>{lang === 'uz' ? p.uz : p.ru}</div>
+                </div>
+                <button onClick={() => speakDE(p.de)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--tg-hint)', flexShrink: 0, padding: '0 4px' }}>🔊</button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       {/* Vocab preview */}
       <div className="section-title">📝 {t.words} ({lesson.vocab?.length})</div>
       <div className="card" style={{ marginBottom: 16 }}>
