@@ -35,6 +35,15 @@ db.init_db()
 exam_db.init_exam_db()
 app.include_router(exam_router)
 
+# Auto-seed exam content on first run
+if not exam_db.get_providers():
+    try:
+        import exam_seed
+        exam_seed.run()
+        print("✅ Exam content seeded automatically")
+    except Exception as e:
+        print(f"⚠️  Auto-seed failed: {e}")
+
 # ── Telegram init data validation ────────────────────────────────────────────
 
 def validate_init_data(init_data: str) -> dict:

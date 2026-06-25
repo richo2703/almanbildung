@@ -3,41 +3,47 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useLang } from '../LangContext'
 
+// Static fallback — always shown even if API is slow/down
+const STATIC_PROVIDERS = [
+  {
+    name: 'goethe',
+    title: 'Goethe-Zertifikat',
+    logo_emoji: '🏛️',
+    description_ru: 'Официальный экзамен Гёте-Института. Признаётся по всему миру. Требуется для визы на воссоединение семьи.',
+    description_uz: 'Goethe-Institut rasmiy imtihoni. Butun dunyoda tan olinadi. Oila birlashuviga viza uchun talab qilinadi.',
+  },
+  {
+    name: 'telc',
+    title: 'telc Deutsch',
+    logo_emoji: '📋',
+    description_ru: 'Европейский языковой сертификат. Признаётся в системе образования и на рынке труда Германии и Австрии.',
+    description_uz: "Yevropa til sertifikati. Germaniya va Avstriyada ta'lim va ish bozorida tan olinadi.",
+  },
+  {
+    name: 'osd',
+    title: 'ÖSD Zertifikat',
+    logo_emoji: '🇦🇹',
+    description_ru: 'Австрийский языковой диплом. Особенно ценится для получения австрийской визы и гражданства.',
+    description_uz: "Avstriya til diplomasi. Avstriya vizasi va fuqaroligi uchun ayniqsa qadrlanadi.",
+  },
+]
+
 const PROVIDER_INFO = {
-  goethe: {
-    emoji: '🏛️',
-    color: '#3B82F6',
-    tagRu: 'Виза • Гражданство • Работа',
-    tagUz: 'Viza • Fuqarolik • Ish',
-    popular: true,
-  },
-  telc: {
-    emoji: '📋',
-    color: '#A855F7',
-    tagRu: 'Образование • Интеграция',
-    tagUz: "Ta'lim • Integratsiya",
-    popular: false,
-  },
-  osd: {
-    emoji: '🇦🇹',
-    color: '#22C55E',
-    tagRu: 'Австрия • Гражданство • Учёба',
-    tagUz: 'Avstriya • Fuqarolik • O\'qish',
-    popular: false,
-  },
+  goethe: { color: '#3B82F6', tagRu: 'Виза • Гражданство • Работа', tagUz: 'Viza • Fuqarolik • Ish', popular: true },
+  telc:   { color: '#A855F7', tagRu: 'Образование • Интеграция',     tagUz: "Ta'lim • Integratsiya",   popular: false },
+  osd:    { color: '#22C55E', tagRu: 'Австрия • Гражданство • Учёба', tagUz: "Avstriya • Fuqarolik • O'qish", popular: false },
 }
 
 export default function ExamPage() {
   const navigate = useNavigate()
   const { lang, t } = useLang()
-  const [providers, setProviders] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [providers, setProviders] = useState(STATIC_PROVIDERS)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     api.exam.getProviders()
-      .then(setProviders)
-      .catch(() => setProviders([]))
-      .finally(() => setLoading(false))
+      .then(data => { if (data?.length) setProviders(data) })
+      .catch(() => {})  // keep static fallback on error
   }, [])
 
   return (
@@ -73,10 +79,7 @@ export default function ExamPage() {
         {lang === 'uz' ? 'Imtihon turini tanlang' : 'Выберите экзамен'}
       </div>
 
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--tg-hint)' }}>...</div>
-      ) : (
-        providers.map(p => {
+      {providers.map(p => {
           const info = PROVIDER_INFO[p.name] || {}
           return (
             <button
@@ -129,8 +132,7 @@ export default function ExamPage() {
               </div>
             </button>
           )
-        })
-      )}
+      })}
 
       {/* Info about levels */}
       <div style={{ marginTop: 8, padding: 16, background: 'var(--card-bg)', borderRadius: 'var(--radius)', border: '1px solid var(--card-border)' }}>
