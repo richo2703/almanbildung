@@ -535,6 +535,74 @@ Bei Fragen wenden Sie sich bitte an die Rezeption.""",
         conn.commit()
         print("  Goethe A1 Schreiben: 2 tasks created.")
 
+    # ── 6. Copy same tasks to telc A1 and ÖSD A1 ─────────────────────────────
+    for pname in ("telc", "osd"):
+        for section_type, label in [("lesen", "Lesen"), ("schreiben", "Schreiben")]:
+            sid = section_ids.get((pname, "A1", section_type))
+            if not sid:
+                continue
+            cnt = conn.execute(
+                "SELECT COUNT(*) as cnt FROM exam_tasks WHERE section_id=?", (sid,)
+            ).fetchone()["cnt"]
+            if cnt > 0:
+                print(f"  {pname} A1 {label} already seeded — skipping.")
+                continue
+
+            # Copy all tasks + questions + options from goethe A1 section
+            ref_sid = section_ids.get(("goethe", "A1", section_type))
+            if not ref_sid:
+                continue
+            ref_tasks = conn.execute(
+                "SELECT * FROM exam_tasks WHERE section_id=? AND is_active=1 ORDER BY sort_order",
+                (ref_sid,)
+            ).fetchall()
+
+            for rt in ref_tasks:
+                new_task_id = conn.execute("""
+                    INSERT INTO exam_tasks
+                      (section_id, title_de, title_ru, task_type,
+                       instruction_de, instruction_ru, instruction_uz,
+                       text_content, extra_data, sort_order)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    sid, rt["title_de"], rt["title_ru"], rt["task_type"],
+                    rt["instruction_de"], rt["instruction_ru"], rt["instruction_uz"],
+                    rt["text_content"], rt["extra_data"] or "{}", rt["sort_order"],
+                )).lastrowid
+                conn.commit()
+
+                ref_qs = conn.execute(
+                    "SELECT * FROM exam_questions WHERE task_id=? ORDER BY sort_order",
+                    (rt["id"],)
+                ).fetchall()
+                for rq in ref_qs:
+                    new_q_id = conn.execute("""
+                        INSERT INTO exam_questions
+                          (task_id, question_text, question_type, correct_answer,
+                           explanation_ru, explanation_uz, points, sort_order)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        new_task_id, rq["question_text"], rq["question_type"],
+                        rq["correct_answer"], rq["explanation_ru"], rq["explanation_uz"],
+                        rq["points"], rq["sort_order"],
+                    )).lastrowid
+                    conn.commit()
+
+                    ref_opts = conn.execute(
+                        "SELECT * FROM exam_answer_options WHERE question_id=? ORDER BY sort_order",
+                        (rq["id"],)
+                    ).fetchall()
+                    for ro in ref_opts:
+                        conn.execute("""
+                            INSERT INTO exam_answer_options
+                              (question_id, option_text, is_correct, sort_order)
+                            VALUES (?, ?, ?, ?)
+                        """, (new_q_id, ro["option_text"], ro["is_correct"], ro["sort_order"]))
+                    conn.commit()
+
+            task_cnt = len(ref_tasks)
+            print(f"  {pname} A1 {label}: {task_cnt} tasks copied from Goethe A1.")
+
     conn.close()
     print("\n✅ Seed complete! Run the app and navigate to /exam to test.")
 

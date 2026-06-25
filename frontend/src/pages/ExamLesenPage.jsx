@@ -10,6 +10,7 @@ export default function ExamLesenPage() {
   const [section, setSection] = useState(null)
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     api.exam.getSection(provider, level, 'lesen')
@@ -18,11 +19,36 @@ export default function ExamLesenPage() {
         return api.exam.getTasks(sec.id)
       })
       .then(t => setTasks(t))
-      .catch(() => {})
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [provider, level])
 
-  if (loading) return <div className="page" style={{ color: 'var(--tg-hint)', textAlign: 'center', paddingTop: 60 }}>...</div>
+  if (loading) return <div className="page" style={{ color: 'var(--tg-hint)', textAlign: 'center', paddingTop: 60 }}>⏳</div>
+
+  if (error || (!loading && tasks.length === 0 && !section)) {
+    return (
+      <div className="page">
+        <button onClick={() => navigate(`/exam/${provider}/${level}`)}
+          style={{ background: 'none', color: 'var(--tg-hint)', fontSize: 13, marginBottom: 20, padding: 0 }}>
+          ← {lang === 'uz' ? 'Orqaga' : 'Назад'}
+        </button>
+        <div style={{ textAlign: 'center', paddingTop: 40 }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>🔧</div>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>
+            {lang === 'uz' ? "Aloqa xatosi" : "Ошибка подключения"}
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--tg-hint)', marginBottom: 20 }}>
+            {lang === 'uz'
+              ? "Server bilan aloqa yo'q. Internet aloqasini tekshiring."
+              : "Нет связи с сервером. Проверьте интернет-соединение."}
+          </div>
+          <button className="btn btn-primary" onClick={() => window.location.reload()}>
+            🔄 {lang === 'uz' ? "Qayta yuklash" : "Перезагрузить"}
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="page">
@@ -51,8 +77,23 @@ export default function ExamLesenPage() {
       </div>
 
       {tasks.length === 0 ? (
-        <div style={{ textAlign: 'center', color: 'var(--tg-hint)', padding: 40 }}>
-          {lang === 'uz' ? "Topshiriqlar yo'q" : "Задания отсутствуют"}
+        <div style={{
+          textAlign: 'center', padding: '32px 16px',
+          background: 'var(--card-bg)', border: '1px solid var(--card-border)',
+          borderRadius: 'var(--radius)',
+        }}>
+          <div style={{ fontSize: 36, marginBottom: 12 }}>⏳</div>
+          <div style={{ fontWeight: 700, marginBottom: 6 }}>
+            {lang === 'uz' ? "Topshiriqlar tayyorlanmoqda" : "Задания загружаются"}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--tg-hint)', lineHeight: 1.6, marginBottom: 16 }}>
+            {lang === 'uz'
+              ? "Server qayta ishga tushirilgach, topshiriqlar avtomatik yaratiladi. Sahifani yangilang."
+              : "После перезапуска сервера задания создаются автоматически. Обновите страницу."}
+          </div>
+          <button className="btn btn-secondary" onClick={() => window.location.reload()}>
+            🔄 {lang === 'uz' ? "Yangilash" : "Обновить"}
+          </button>
         </div>
       ) : (
         tasks.map((task, i) => {

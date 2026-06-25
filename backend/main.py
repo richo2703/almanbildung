@@ -35,8 +35,17 @@ db.init_db()
 exam_db.init_exam_db()
 app.include_router(exam_router)
 
-# Auto-seed exam content on first run
-if not exam_db.get_providers():
+# Auto-seed exam content — check for tasks (not just providers)
+def _has_exam_tasks():
+    try:
+        conn = exam_db.get_conn()
+        row = conn.execute("SELECT COUNT(*) as cnt FROM exam_tasks").fetchone()
+        conn.close()
+        return row["cnt"] > 0
+    except Exception:
+        return False
+
+if not _has_exam_tasks():
     try:
         import exam_seed
         exam_seed.run()
