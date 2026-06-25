@@ -13,6 +13,8 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 import database as db
+import exam_db
+from exam_router import router as exam_router
 from content import (
     get_lesson, get_lesson_vocab, get_exercises,
     get_all_vocab, total_lessons, LEVELS_ORDER, CONTENT
@@ -30,6 +32,8 @@ app.add_middleware(
 )
 
 db.init_db()
+exam_db.init_exam_db()
+app.include_router(exam_router)
 
 # ── Telegram init data validation ────────────────────────────────────────────
 

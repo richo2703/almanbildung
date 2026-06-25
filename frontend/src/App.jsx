@@ -17,8 +17,20 @@ import FillPage from './pages/FillPage'
 import OrderPage from './pages/OrderPage'
 import ProgressPage from './pages/ProgressPage'
 import SettingsPage from './pages/SettingsPage'
+import ExamPage from './pages/ExamPage'
+import ExamLevelPage from './pages/ExamLevelPage'
+import ExamDashboardPage from './pages/ExamDashboardPage'
+import ExamInfoPage from './pages/ExamInfoPage'
+import ExamLesenPage from './pages/ExamLesenPage'
+import ExamTaskPage from './pages/ExamTaskPage'
+import ExamSchreibenListPage from './pages/ExamSchreibenListPage'
+import ExamSchreibenPage from './pages/ExamSchreibenPage'
 
-const HIDE_NAV_PATHS = ['/lesson/', '/vocab/', '/test/', '/article/', '/match/', '/speed/', '/listen/', '/scramble/', '/fill/', '/order/']
+const HIDE_NAV_PATHS = [
+  '/lesson/', '/vocab/', '/test/', '/article/', '/match/', '/speed/',
+  '/listen/', '/scramble/', '/fill/', '/order/',
+  '/exam/',
+]
 
 function Layout() {
   const { lang } = useLang()
@@ -46,6 +58,15 @@ function Layout() {
         <Route path="/order/:level/:id" element={<OrderPage />} />
         <Route path="/progress" element={<ProgressPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        {/* Exam preparation module */}
+        <Route path="/exam" element={<ExamPage />} />
+        <Route path="/exam/:provider" element={<ExamLevelPage />} />
+        <Route path="/exam/:provider/:level" element={<ExamDashboardPage />} />
+        <Route path="/exam/:provider/:level/info" element={<ExamInfoPage />} />
+        <Route path="/exam/:provider/:level/lesen" element={<ExamLesenPage />} />
+        <Route path="/exam/:provider/:level/lesen/:taskId" element={<ExamTaskPage />} />
+        <Route path="/exam/:provider/:level/schreiben" element={<ExamSchreibenListPage />} />
+        <Route path="/exam/:provider/:level/schreiben/:taskId" element={<ExamSchreibenPage />} />
       </Routes>
       {!hideNav && <BottomNav />}
     </>

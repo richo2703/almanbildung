@@ -50,4 +50,28 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ level, lesson_id, score, max_score }),
     }),
+
+  // ── Exam preparation ─────────────────────────────────────────────────────
+  exam: {
+    getProviders: () => request('/api/exam/providers'),
+    getProvider: (name) => request(`/api/exam/providers/${name}`),
+    getLevels: (provider) => request(`/api/exam/${provider}/levels`),
+    getLevelInfo: (provider, level) => request(`/api/exam/${provider}/${level}`),
+    getSections: (provider, level) => request(`/api/exam/${provider}/${level}/sections`),
+    getSection: (provider, level, type) => request(`/api/exam/${provider}/${level}/sections/${type}`),
+    getTasks: (sectionId) => request(`/api/exam/sections/${sectionId}/tasks`),
+    getTask: (taskId) => request(`/api/exam/tasks/${taskId}`),
+    submitAttempt: (taskId, answers) =>
+      request(`/api/exam/tasks/${taskId}/attempt`, {
+        method: 'POST',
+        body: JSON.stringify({ answers }),
+      }),
+    getProgress: (provider, level) => request(`/api/exam/me/${provider}/${level}/progress`),
+    submitWriting: (taskId, userText) =>
+      request('/api/exam/writing/submit', {
+        method: 'POST',
+        body: JSON.stringify({ task_id: taskId, user_text: userText }),
+      }),
+    getLatestWriting: (taskId) => request(`/api/exam/writing/${taskId}/latest`),
+  },
 }
