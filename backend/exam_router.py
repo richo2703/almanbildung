@@ -1,4 +1,8 @@
-"""Exam preparation API router — Alman Bildung"""
+"""Exam preparation API router — Alman Bildung
+IMPORTANT: Route order matters in FastAPI.
+Specific literal paths (tasks/, sections/, writing/, me/) MUST come
+before wildcard paths (/{provider}/{level}) to prevent shadowing.
+"""
 import os
 import hmac
 import hashlib
@@ -16,9 +20,9 @@ router = APIRouter(prefix="/api/exam", tags=["exam"])
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "")
 
 
-# ── Auth helper (mirrors main.py) ─────────────────────────────────────────────
+# ── Auth helper ───────────────────────────────────────────────────────────────
 
-def _get_user_id(x_init_data: str = Header(default="")) -> int:
+def _get_user_id(x_init_data: str) -> int:
     if not x_init_data:
         raise HTTPException(status_code=401, detail="Missing init data")
 
@@ -55,17 +59,29 @@ def _get_user_id(x_init_data: str = Header(default="")) -> int:
     return int(uid)
 
 
+def _try_get_uid(x_init_data: str) -> int | None:
+    """Get user id without raising — for optional auth endpoints."""
+    try:
+        return _get_user_id(x_init_data) if x_init_data else None
+    except Exception:
+        return None
+
+
 # ── Pydantic models ───────────────────────────────────────────────────────────
 
 class AttemptPayload(BaseModel):
-    answers: dict   # {question_id: answer_text}
+    answers: dict   # {str(question_id): answer_text}
 
 class WritingSubmitPayload(BaseModel):
     task_id: int
     user_text: str
 
 
-# ── Providers ─────────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# SPECIFIC routes first — BEFORE any wildcard routes
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Providers (literal prefix "providers") ────────────────────────────────────
 
 @router.get("/providers")
 def get_providers():
@@ -80,65 +96,29 @@ def get_provider(provider_name: str):
     return p
 
 
-# ── Levels ────────────────────────────────────────────────────────────────────
-
-@router.get("/{provider_name}/levels")
-def get_levels(provider_name: str):
-    levels = exam_db.get_levels(provider_name)
-    if not levels:
-        raise HTTPException(404, "No levels found for this provider")
-    return levels
-
-
-@router.get("/{provider_name}/{level}")
-def get_level_info(provider_name: str, level: str):
-    info = exam_db.get_level_info(provider_name, level)
-    if not info:
-        raise HTTPException(404, "Level not found")
-    return info
-
-
-# ── Sections ──────────────────────────────────────────────────────────────────
-
-@router.get("/{provider_name}/{level}/sections")
-def get_sections(provider_name: str, level: str):
-    return exam_db.get_sections(provider_name, level)
-
-
-@router.get("/{provider_name}/{level}/sections/{section_type}")
-def get_section(provider_name: str, level: str, section_type: str):
-    s = exam_db.get_section_by_type(provider_name, level, section_type)
-    if not s:
-        raise HTTPException(404, "Section not found")
-    return s
-
-
-# ── Tasks ─────────────────────────────────────────────────────────────────────
+# ── Sections tasks (literal prefix "sections") ────────────────────────────────
 
 @router.get("/sections/{section_id}/tasks")
 def get_tasks(section_id: int, x_init_data: str = Header(default="")):
     tasks = exam_db.get_tasks(section_id)
-    # Attach best attempt info if user is authenticated
-    if x_init_data:
-        try:
-            uid = _get_user_id(x_init_data)
-            for t in tasks:
-                best = exam_db.get_best_attempt(uid, t['id'])
-                t['best_attempt'] = best
-        except Exception:
-            pass
+    uid = _try_get_uid(x_init_data)
+    if uid:
+        for t in tasks:
+            t['best_attempt'] = exam_db.get_best_attempt(uid, t['id'])
     return tasks
 
 
+# ── Tasks (literal prefix "tasks") ────────────────────────────────────────────
+
 @router.get("/tasks/{task_id}")
-def get_task(task_id: int, x_init_data: str = Header(default="")):
+def get_task(task_id: int):
     task = exam_db.get_task_full(task_id)
     if not task:
         raise HTTPException(404, "Task not found")
-    # Strip is_correct from options (don't reveal answer to client)
+    # Hide correct answers from client
     for q in task.get('questions', []):
         for opt in q.get('options', []):
-            del opt['is_correct']
+            opt.pop('is_correct', None)
     return task
 
 
@@ -150,7 +130,6 @@ def submit_attempt(task_id: int, payload: AttemptPayload,
     if not task:
         raise HTTPException(404, "Task not found")
 
-    # Score the attempt
     score = 0
     max_score = 0
     question_results = []
@@ -158,7 +137,7 @@ def submit_attempt(task_id: int, payload: AttemptPayload,
     for q in task['questions']:
         max_score += q['points']
         user_answer = payload.answers.get(str(q['id']), "")
-        correct_opt = next((o for o in q['options'] if o['is_correct']), None)
+        correct_opt = next((o for o in q['options'] if o.get('is_correct')), None)
         correct_text = correct_opt['option_text'] if correct_opt else q.get('correct_answer', '')
         is_correct = user_answer.strip().lower() == correct_text.strip().lower()
         if is_correct:
@@ -177,23 +156,25 @@ def submit_attempt(task_id: int, payload: AttemptPayload,
     result['question_results'] = question_results
 
     # Update section progress
-    section = exam_db.get_conn().execute(
-        "SELECT es.*, el.level, ep.name as pname FROM exam_sections es "
+    conn = exam_db.get_conn()
+    section = conn.execute(
+        "SELECT es.type, el.level, ep.name as pname "
+        "FROM exam_sections es "
         "JOIN exam_tasks et ON et.section_id = es.id "
         "JOIN exam_levels el ON el.id = es.level_id "
         "JOIN exam_providers ep ON ep.id = el.provider_id "
         "WHERE et.id=?", (task_id,)
     ).fetchone()
+    conn.close()
     if section:
         exam_db.update_progress(
             uid, section['pname'], section['level'],
             section['type'], result['percentage']
         )
-
     return result
 
 
-# ── Progress ──────────────────────────────────────────────────────────────────
+# ── Progress (literal prefix "me") ────────────────────────────────────────────
 
 @router.get("/me/{provider_name}/{level}/progress")
 def get_my_progress(provider_name: str, level: str,
@@ -202,7 +183,6 @@ def get_my_progress(provider_name: str, level: str,
     progress = exam_db.get_progress(uid, provider_name, level)
     sections = exam_db.get_sections(provider_name, level)
 
-    # Build full progress with section task counts
     result = {}
     for section in sections:
         tasks = exam_db.get_tasks(section['id'])
@@ -218,7 +198,7 @@ def get_my_progress(provider_name: str, level: str,
     return result
 
 
-# ── Writing ───────────────────────────────────────────────────────────────────
+# ── Writing (literal prefix "writing") ────────────────────────────────────────
 
 @router.post("/writing/submit")
 def submit_writing(payload: WritingSubmitPayload,
@@ -230,20 +210,21 @@ def submit_writing(payload: WritingSubmitPayload,
 
     sub_id = exam_db.save_writing(uid, payload.task_id, payload.user_text)
 
-    # Get model answer from extra data
     extra = task.get('extra') or {}
     model_answer = extra.get('model_answer', '')
     checklist = extra.get('checklist', [])
     redemittel = extra.get('redemittel', [])
 
-    # Mark progress
-    section = exam_db.get_conn().execute(
-        "SELECT es.*, el.level, ep.name as pname FROM exam_sections es "
+    conn = exam_db.get_conn()
+    section = conn.execute(
+        "SELECT es.type, el.level, ep.name as pname "
+        "FROM exam_sections es "
         "JOIN exam_tasks et ON et.section_id = es.id "
         "JOIN exam_levels el ON el.id = es.level_id "
         "JOIN exam_providers ep ON ep.id = el.provider_id "
         "WHERE et.id=?", (payload.task_id,)
     ).fetchone()
+    conn.close()
     if section:
         exam_db.update_progress(uid, section['pname'], section['level'], section['type'], 70.0)
 
@@ -260,5 +241,37 @@ def submit_writing(payload: WritingSubmitPayload,
 @router.get("/writing/{task_id}/latest")
 def get_latest_writing(task_id: int, x_init_data: str = Header(default="")):
     uid = _get_user_id(x_init_data)
-    sub = exam_db.get_latest_writing(uid, task_id)
-    return sub or {}
+    return exam_db.get_latest_writing(uid, task_id) or {}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# WILDCARD routes last — these would shadow specific paths if placed above
+# ══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/{provider_name}/levels")
+def get_levels(provider_name: str):
+    levels = exam_db.get_levels(provider_name)
+    if not levels:
+        raise HTTPException(404, "No levels found")
+    return levels
+
+
+@router.get("/{provider_name}/{level}/sections/{section_type}")
+def get_section(provider_name: str, level: str, section_type: str):
+    s = exam_db.get_section_by_type(provider_name, level, section_type)
+    if not s:
+        raise HTTPException(404, "Section not found")
+    return s
+
+
+@router.get("/{provider_name}/{level}/sections")
+def get_sections(provider_name: str, level: str):
+    return exam_db.get_sections(provider_name, level)
+
+
+@router.get("/{provider_name}/{level}")
+def get_level_info(provider_name: str, level: str):
+    info = exam_db.get_level_info(provider_name, level)
+    if not info:
+        raise HTTPException(404, "Level not found")
+    return info
