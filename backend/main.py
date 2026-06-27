@@ -53,6 +53,14 @@ if not _has_exam_tasks():
     except Exception as e:
         print(f"⚠️  Auto-seed failed: {e}")
 
+# Always run v2 seed (idempotent — skips existing tasks, adds new content)
+try:
+    import exam_seed_v2
+    exam_seed_v2.run()
+    print("✅ exam_seed_v2: extended content applied")
+except Exception as e:
+    print(f"⚠️  exam_seed_v2 failed: {e}")
+
 # ── Telegram init data validation ────────────────────────────────────────────
 
 def validate_init_data(init_data: str) -> dict:
